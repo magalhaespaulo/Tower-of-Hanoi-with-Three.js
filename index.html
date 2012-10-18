@@ -19,7 +19,6 @@
 		<script src="js/Stats.js" type="text/javascript"></script>
 		<script src="js/Tween.js" type="text/javascript"></script>
 		<script src="js/greensock/TweenMax.min.js" type="text/javascript"></script>
-		
 		<script src="js/jquery-1.8.2.min.js" type="text/javascript"></script>
 
 		<script>
@@ -35,22 +34,25 @@ var tAarray = [];
 var tBarray = [];
 var tCarray = [];
 var discos = [];
-var movimentos = [];
+var movimentos_origem = [];
+var movimentos_destino = [];
 var movimentos_count = 1;
 var aux = 0;
 var automatico=true;
 var quantidade_discos = 3;
-var escolher_quantidade_discos = [7,3,4,5,6,7,8,9,10,11,12,13,14,15];
+var escolher_quantidade_discos = [quantidade_discos,4,3,4,5,6,7,8,9,10,11,12,13,14,15];
 var spaco = 6;
-var velocidadeTorres = .12;
+var velocidadeTorres = .205002372;
 var cores_discos=[0xCC0000,0x009900,0x3333FF,0x993366,0x666666];
 
-var altura_torres = 100;
-var torre_a_x = -altura_torres; //*altura_torres*.02;
+var altura_torres = 50*(quantidade_discos*.25);
+var torre_a_x = -altura_torres*2; //*altura_torres*.02;
 var torre_b_x = 0;
-var torre_c_x = altura_torres;
+var torre_c_x = altura_torres*2;
 
 var base, torreA, torreB, torreC;
+
+var discos_scene;
 
 var tl = new TimelineLite();
 
@@ -69,8 +71,8 @@ function pre_init(){
 	textos.style.width = '100%';
 	textos.style.textAlign = 'center';
 	textos.id = 'textos';
-	textos.innerHTML = '<input type="checkbox" id="automatico" checked="checked">Automatico</input><div id"infors"><select id="select"></select><input type="button" id="iniciar" value="Iniciar" onclick="init()" /></div>';
-	container.appendChild( textos );//
+	textos.innerHTML = '<input type="checkbox" id="automatico" //checked="checked">Automatico</input><div id"infors"><select id="select"></select><input type="button" id="iniciar" value="Iniciar" onclick="init()" /></div>';
+	container.appendChild( textos );
 
 
 	var select = document.getElementById("select");
@@ -112,9 +114,9 @@ function init(){
 				light.position.set( -1, -1, -1 ).normalize();
 				scene.add( light );
 
-				geometry = new THREE.TorusGeometry( 20, 4, 25 );
-				cube_base = new THREE.CubeGeometry( altura_torres*4, altura_torres, 2 );
-				cube = new THREE.CubeGeometry( 8*altura_torres*.01, 8*altura_torres*.01, altura_torres );
+				geometry = new THREE.TorusGeometry( 20, spaco/2, spaco );
+				cube_base = new THREE.CubeGeometry( altura_torres*8, altura_torres*2, 2 );
+				cube = new THREE.CubeGeometry( 8*altura_torres*.02, 8*altura_torres*.02, altura_torres );
 
 				base = new THREE.Mesh( cube_base, new THREE.MeshLambertMaterial( { color: 0x663300 /*Math.random() * 0xffffff*/ } ) );
 				base.position.set(0,-3,0);
@@ -136,18 +138,72 @@ function init(){
 				torreC.name = "C";
 				scene.add( torreC );
 
+var extrudeSettings = { amount: spaco/3,
+					bevelSegments: 12,
+					steps: 2,
+					bevelSegments: 5,
+					bevelSize: 2, 
+					bevelThickness:spaco/3 };
+
+
+				
+					
+
+					
+					
+
+					
+
+
 				for ( var i = 0; i<quantidade_discos; i++ )
 				{ // = ( Math.random() * 360 ) * Math.PI / 180;
+				/*
 					var disco = "disco"+i;
-					eval(disco + " = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff  } ) )"); //cores_discos[i]
-					eval(disco + ".rotation.x = 90 * Math.PI / 180");
-					eval(disco + ".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");
-					eval(disco + ".scale.set(.7+i*altura_torres*.002,.7+i*altura_torres*.002,.7+altura_torres*.002)");
-					
+					eval(disco + " = THREE.SceneUtils.createMultiMaterialObject( new THREE.ExtrudeGeometry( arcShape2, extrudeSettings ), [ new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) ] )");
+					//eval(disco + " = new THREE.Mesh( geometry, new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff  } ) )"); //cores_discos[i]
+					eval(disco + ".rotation.x = -Math.PI/2");
+					eval(disco + ".position.set(-i,((quantidade_discos-1)*spaco)+(-i*spaco),i)");//".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");
+					eval(disco + ".scale.set(.6+i*altura_torres*.002,.6+i*altura_torres*.002,1)");
 					eval(disco + ".id = i");
-					scene.add( eval(disco) );
+					discos_scene.add( eval(disco) );
 
 					tAarray.push( eval(disco).id );
+				*/
+/*
+its works*/
+
+				var arcShape2 = new THREE.Shape();
+				arcShape2.absarc( 10, 10, 20+(i*4), 0, Math.PI*2, false );
+
+				var holePath2 = new THREE.Shape();
+				holePath2.absarc( 10, 10, 15, 0, Math.PI*2, true );
+				arcShape2.holes.push( holePath2 );
+
+					var disc = "disco"+i;
+					eval(disc + "= new THREE.Object3D()");
+					var object_disc = THREE.SceneUtils.createMultiMaterialObject( new THREE.ExtrudeGeometry( arcShape2, extrudeSettings ), [ new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) ] );
+					object_disc.rotation.x = -Math.PI/2;
+					object_disc.position.set(-10,0,10);
+					eval(disc + ".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");//".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");
+					eval(disc).id = i;
+					eval(disc).add( object_disc );
+					scene.add( eval(disc) );
+
+/*
+its works
+					var disc = "disco"+i;
+					eval(disc + "= new THREE.Object3D()");
+					var NUM = .75+i*altura_torres*.003;
+					var object_disc = THREE.SceneUtils.createMultiMaterialObject( new THREE.ExtrudeGeometry( arcShape2, extrudeSettings ), [ new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) ] );
+					object_disc.rotation.x = -Math.PI/2;
+					object_disc.position.set(-10*NUM,0,10*NUM);
+					object_disc.scale.set(NUM,NUM,1);
+					eval(disc + ".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");//".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");
+					eval(disc).id = i;
+					eval(disc).add( object_disc );
+					scene.add( eval(disc) );
+*/
+					tAarray.push( eval(disc).id );
 				}
 
 				projector = new THREE.Projector();
@@ -167,86 +223,40 @@ function init(){
 				document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				document.addEventListener( 'keydown', onDocumentKeydown, false );
 
-				//
-
 				window.addEventListener( 'resize', onWindowResize, false );
 				
 TweenLite.ticker.addEventListener("tick", render);
-
-
-// Insert our tweens. The sequence will auto start, and stagger with a 0.2s delay in between.
-//tl.insertMultiple(tweens, 1, 'start', .2);
-
 				
 			}
-			
-			
 
-
-/*
-function vai_c(name) {
-
-		if ( name == "disco_1" ) obj = disco1;
-		if ( name == "disco_2" ) obj = disco2;
-		if ( name == "disco_3" ) obj = disco3;
-		
-		TweenLite.to(obj.position, .5, { x: 50, ease:SlowMo.ease.config(0.2, 0.2), delay:.5, onComplete:espera( obj.name )} );
-}
-
-function espera( name ){
-
-		if ( name == "disco_1" ) obj = disco1;
-		if ( name == "disco_2" ) obj = disco2;
-		if ( name == "disco_3" ) obj = disco3;
-}*/
-
-function subir( disco, torre ) {
-
-	/*for ( var i = 0; i<quantidade_discos; i++ ) {
-		if ( disco == i ){
-			var objeto = "disco"+i;
-			obj = eval(objeto);
-		}
-	}
-	*/obj = eval("disco"+disco);
-	
-	
-
-
-	if(obj.position.x == torre_a_x) { tAarray.shift(); //alert( 'Torre A tem '+tAarray.length+' discos: '+tAarray);
-		//torre = 'A';
-	}
-	if(obj.position.x == torre_b_x) { tBarray.shift(); //alert( 'Torre B tem '+tBarray.length+' discos: '+tBarray);
-		//torre = 'B';
-	}
-	if(obj.position.x == torre_c_x) { tCarray.shift(); //alert( 'Torre C tem '+tCarray.length+' discos: '+tCarray);
-		//torre = 'C';
-	}
-
-		
-		//TweenLite.to(obj.position, 1, { y: 50, ease:Expo.easeOut, delay:0} );
-
-		if ( torre == 'A' ) tl.to(obj.position, velocidadeTorres, { y: 100, ease:Expo.easeOut, onComplete: torre_A} );
-		if ( torre == 'B' ) tl.to(obj.position, velocidadeTorres, { y: 100, ease:Expo.easeOut, onComplete: torre_B} );
-		if ( torre == 'C' ) tl.to(obj.position, velocidadeTorres, { y: 100, ease:Expo.easeOut, onComplete: torre_C} );
-		else tl.to(obj.position, velocidadeTorres, { y: 100, ease:Expo.easeOut } );
-
-		if ( !automatico )
-		{
-			document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
-			document.addEventListener( 'mousedown', onDocumentMouseDownTorres, false );
-		}
-		//alert(torre);
-
-}
-
-function descer( torre )
+function subir( disco, origem, destino )
 {
-	if ( torre == 'A' || torre == 'B' || torre == 'C')
+console.log(origem + " " +destino);
+console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
+	obj = eval("disco"+disco);
+	
+	if( origem == 'A' ) tAarray.sort().shift(); 
+	if( origem == 'B' ) tBarray.sort().shift();
+	if( origem == 'C' ) tCarray.sort().shift();
+
+	if ( destino == 'A' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut, onComplete: torre_A} );
+	else if ( destino == 'B' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut, onComplete: torre_B} );
+	else if ( destino == 'C' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut, onComplete: torre_C} );
+	else tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut } );
+
+	if ( !automatico ) {
+		document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
+		document.addEventListener( 'mousedown', onDocumentMouseDownTorres, false );
+	}
+}
+
+function descer( destino )
+{
+	if ( destino == 'A' || destino == 'B' || destino == 'C')
 	{
-		if ( torre == 'A' ) torre_A(obj);
-		if ( torre == 'B' ) torre_B(obj);
-		if ( torre == 'C' ) torre_C(obj);
+		if ( destino == 'A' ) torre_A(obj);
+		if ( destino == 'B' ) torre_B(obj);
+		if ( destino == 'C' ) torre_C(obj);
 		
 		document.removeEventListener( 'mousedown', onDocumentMouseDownTorres, false );
 		document.addEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -260,7 +270,10 @@ function proximo()
 	if ( automatico && discos.length-1 > aux )
 	{
 		aux++;
-		subir( discos[aux]-1, movimentos[aux] );
+		subir( discos[aux]-1, movimentos_origem[aux], movimentos_destino[aux] );
+		
+	}else{
+		console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
 	}
 
 }
@@ -270,77 +283,44 @@ function init_solution()
 	function hanoiArray(disco, inicio, temp, fim ){
 
 		if ( disco == 1 ) {
-			discos.push(disco); movimentos.push(fim);
+			discos.push(disco); movimentos_origem.push(inicio); movimentos_destino.push(fim);
 		} else {
 			hanoiArray( disco-1, inicio, fim, temp );
-			discos.push(disco); movimentos.push(fim);
+			discos.push(disco); movimentos_origem.push(inicio); movimentos_destino.push(fim);
 			hanoiArray( disco-1, temp, inicio, fim );
 		}
 	}
 	hanoiArray(quantidade_discos, 'A','B','C');
 
-	if ( automatico ) subir( discos[aux]-1, movimentos[aux] );
-	
-	//alert('Menor solução: '+movimentos.length+' movimentos.');
+	if ( automatico ) subir( discos[aux]-1, movimentos_origem[aux], movimentos_destino[aux] );
+
+	//alert('Menor soluçao: '+movimentos.length+' movimentos.');
 }
 
 
 
 
 function torre_A() {
-
-	tl.to(obj.position, velocidadeTorres*2, { bezier:{values:[{x:torre_a_x/2, y:altura_torres*2}, {x:torre_a_x, y:altura_torres+20}]}, ease:Expo.easeOut } );
-	tl.to(obj.position, velocidadeTorres/2, { y: tAarray.length*spaco, ease:Bounce.easeOut, onComplete: proximo} );
+	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_a_x/2, y:altura_torres*2}, {x:torre_a_x, y:altura_torres+5}]}, ease:Expo.easeOut } );
+	tl.to(obj.position, velocidadeTorres/2, { y: tAarray.length*spaco, ease:Strong.easeOut, onComplete: proximo} );
 
 	tAarray.unshift(obj.id);
 	document.getElementById('movimentos').innerHTML = movimentos_count++;
-	//tAarray.push(obj.id);
-	//tAarray.sort(function(a,b){return a-b});
-	//alert( 'Torre A tem '+tAarray.length+' discos: '+tAarray);
-	
 }
 function torre_B() {
-
-	tl.to(obj.position, velocidadeTorres*2, { bezier:{values:[{x:torre_b_x/2, y:altura_torres*2}, {x:torre_b_x, y:altura_torres+20}]}, ease:Expo.easeOut });
-	tl.to(obj.position, velocidadeTorres/2, { y: tBarray.length*spaco, ease:Bounce.easeOut, onComplete: proximo});
+	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_b_x/2, y:altura_torres*2}, {x:torre_b_x, y:altura_torres+5}]}, ease:Expo.easeOut });
+	tl.to(obj.position, velocidadeTorres/2, { y: tBarray.length*spaco, ease:Strong.easeOut, onComplete: proximo});
 	
 	tBarray.unshift(obj.id);
 	document.getElementById('movimentos').innerHTML = movimentos_count++;
-	//tBarray.push(obj.id);
-	//tBarray.sort(function(a,b){return a-b});
-	//alert( 'Torre B tem '+tBarray.length+' discos: '+tBarray);
-	
 }
 function torre_C() {
+	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_c_x/2, y:altura_torres*2}, {x:torre_c_x, y:altura_torres+5}]}, ease:Expo.easeOut } );
+	tl.to(obj.position, velocidadeTorres/2, { y: tCarray.length*spaco, ease:Strong.easeOut, onComplete: proximo} );
 
-	tl.to(obj.position, velocidadeTorres*2, { bezier:{values:[{x:torre_c_x/2, y:altura_torres*2}, {x:torre_c_x, y:altura_torres+20}]}, ease:Expo.easeOut } );
-	tl.to(obj.position, velocidadeTorres/2, { y: tCarray.length*spaco, ease:Bounce.easeOut, onComplete: proximo} );
-	
-	
 	tCarray.unshift(obj.id);
 	document.getElementById('movimentos').innerHTML = movimentos_count++;
-	//tCarray.push(obj.id);
-	//tCarray.sort(function(a,b){return a-b});
-	//alert( 'Torre C tem '+tCarray.length+' discos: '+tCarray);
-	
 }
-
-
-
-/*
-$("#torreA").click(function() {
-	torre_a();
-	
-});
-$("#torreB").click(function() {
-	torre_b();
-	
-});
-$("#torreC").click(function() {
-	torre_c();
-	
-});
-*/
 
 			function onWindowResize() {
 
@@ -417,6 +397,7 @@ if(intersects[0].object.position.x == -50) torre = 'torre A';
 if(intersects[0].object.position.x == 0) torre = 'torre B';
 if(intersects[0].object.position.x == 50) torre = 'torre C';
 */
+//alert(intersects[0].object.id);
 subir( intersects[0].object.id );//subir( intersects[0].object.name, intersects[0].object.id );
 
 
