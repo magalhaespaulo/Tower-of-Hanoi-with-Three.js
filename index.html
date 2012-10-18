@@ -39,16 +39,16 @@ var movimentos_destino = [];
 var movimentos_count = 1;
 var aux = 0;
 var automatico=true;
-var quantidade_discos = 3;
+var quantidade_discos = 5;
 var escolher_quantidade_discos = [quantidade_discos,4,3,4,5,6,7,8,9,10,11,12,13,14,15];
-var spaco = 6;
+var spaco = 8;
 var velocidadeTorres = .205002372;
 var cores_discos=[0xCC0000,0x009900,0x3333FF,0x993366,0x666666];
 
 var altura_torres = 50*(quantidade_discos*.25);
-var torre_a_x = -altura_torres*2; //*altura_torres*.02;
+var torre_a_x = -altura_torres*1.5; //*altura_torres*.02;
 var torre_b_x = 0;
-var torre_c_x = altura_torres*2;
+var torre_c_x = altura_torres*1.5;
 
 var base, torreA, torreB, torreC;
 
@@ -115,11 +115,11 @@ function init(){
 				scene.add( light );
 
 				geometry = new THREE.TorusGeometry( 20, spaco/2, spaco );
-				cube_base = new THREE.CubeGeometry( altura_torres*8, altura_torres*2, 2 );
+				cube_base = new THREE.CubeGeometry( altura_torres*6, altura_torres*2, 12 );
 				cube = new THREE.CubeGeometry( 8*altura_torres*.02, 8*altura_torres*.02, altura_torres );
 
 				base = new THREE.Mesh( cube_base, new THREE.MeshLambertMaterial( { color: 0x663300 /*Math.random() * 0xffffff*/ } ) );
-				base.position.set(0,-3,0);
+				base.position.set(0,-8,0);
 				base.rotation.x = -Math.PI/2;
 				scene.add( base );
 				torreA = new THREE.Mesh( cube, new THREE.MeshLambertMaterial( { color: 0x663300 } ) );
@@ -181,7 +181,7 @@ its works*/
 
 					var disc = "disco"+i;
 					eval(disc + "= new THREE.Object3D()");
-					var object_disc = THREE.SceneUtils.createMultiMaterialObject( new THREE.ExtrudeGeometry( arcShape2, extrudeSettings ), [ new THREE.MeshLambertMaterial( { color: Math.random() * 0xffffff } ) ] );
+					var object_disc = THREE.SceneUtils.createMultiMaterialObject( new THREE.ExtrudeGeometry( arcShape2, extrudeSettings ), [ new THREE.MeshLambertMaterial( { color: cores_discos[i] } ) ] );//Math.random() * 0xffffff
 					object_disc.rotation.x = -Math.PI/2;
 					object_disc.position.set(-10,0,10);
 					eval(disc + ".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");//".position.set(torre_a_x,((quantidade_discos-1)*spaco)+(-i*spaco),0)");
@@ -239,10 +239,10 @@ console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
 	if( origem == 'B' ) tBarray.sort().shift();
 	if( origem == 'C' ) tCarray.sort().shift();
 
-	if ( destino == 'A' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut, onComplete: torre_A} );
-	else if ( destino == 'B' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut, onComplete: torre_B} );
-	else if ( destino == 'C' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut, onComplete: torre_C} );
-	else tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeOut } );
+	if ( destino == 'A' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: torre_A} );
+	else if ( destino == 'B' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: torre_B} );
+	else if ( destino == 'C' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: torre_C} );
+	else tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn } );
 
 	if ( !automatico ) {
 		document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
@@ -301,22 +301,22 @@ function init_solution()
 
 
 function torre_A() {
-	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_a_x/2, y:altura_torres*2}, {x:torre_a_x, y:altura_torres+5}]}, ease:Expo.easeOut } );
-	tl.to(obj.position, velocidadeTorres/2, { y: tAarray.length*spaco, ease:Strong.easeOut, onComplete: proximo} );
+	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_a_x/2, y:altura_torres*2}, {x:torre_a_x, y:altura_torres+10}]}, ease:Quart.easeOut } );
+	tl.to(obj.position, velocidadeTorres/2, { y: tAarray.length*spaco, ease:Sine.easeIn, onComplete: proximo} );
 
 	tAarray.unshift(obj.id);
 	document.getElementById('movimentos').innerHTML = movimentos_count++;
 }
 function torre_B() {
-	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_b_x/2, y:altura_torres*2}, {x:torre_b_x, y:altura_torres+5}]}, ease:Expo.easeOut });
-	tl.to(obj.position, velocidadeTorres/2, { y: tBarray.length*spaco, ease:Strong.easeOut, onComplete: proximo});
+	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_b_x/2, y:altura_torres*2}, {x:torre_b_x, y:altura_torres+10}]}, ease:Quart.easeOut });
+	tl.to(obj.position, velocidadeTorres/2, { y: tBarray.length*spaco, ease:Sine.easeIn, onComplete: proximo});
 	
 	tBarray.unshift(obj.id);
 	document.getElementById('movimentos').innerHTML = movimentos_count++;
 }
 function torre_C() {
-	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_c_x/2, y:altura_torres*2}, {x:torre_c_x, y:altura_torres+5}]}, ease:Expo.easeOut } );
-	tl.to(obj.position, velocidadeTorres/2, { y: tCarray.length*spaco, ease:Strong.easeOut, onComplete: proximo} );
+	tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_c_x/2, y:altura_torres*2}, {x:torre_c_x, y:altura_torres+10}]}, ease:Quart.easeOut } );
+	tl.to(obj.position, velocidadeTorres/2, { y: tCarray.length*spaco, ease:Sine.easeIn, onComplete: proximo} );
 
 	tCarray.unshift(obj.id);
 	document.getElementById('movimentos').innerHTML = movimentos_count++;
