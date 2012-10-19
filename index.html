@@ -23,32 +23,32 @@
 
 		<script>
 
-		var container, stats, camera, controls, scene, projector, renderer,
+		var container, stats, camera, controls, scene, projector, renderer, NEAR = 5, FAR = 2000,
+		
+		light, SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024,
+		MARGIN = 100, SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight - 2 * MARGIN, FLOOR = -250,
+
 
 		mouse = new THREE.Vector2(), offset = new THREE.Vector3(), INTERSECTED, SELECTED,
-		
-		geometry, cube, object, obj,
 
-		base, torreA, torreB, torreC,
-		tAarray = [], tBarray = [], tCarray = [], discos = [], movimentos_origem = [], movimentos_destino = [],
-		movimentos_count = 1,
-		aux = 0,
+		geometry, cube, object, discoSuspenso,
+
 		automatico=true,
-		quantidade_discos = 5,
-		escolher_quantidade_discos = [quantidade_discos,3,4,5,6,7,8,9,10,11,12,13,14,15],
-		spaco = 8,
-		velocidadeTorres = .075,
+		tamanho = 8,
+		quantidadeDiscos = 5,
+		velocidadeTorres = .375,
+		escolherQuantidadeDiscos = [quantidadeDiscos,3,4,5,6,7,8,9,10,11,12,13,14,15],
 		cores_discos=[0xCC0000,0x009900,0x3333FF,0x993366,0x666666],
 
-		altura_torres = 50*(quantidade_discos*.25),
-		torre_a_x = -altura_torres*1.5,
-		torre_b_x = 0,
-		torre_c_x = altura_torres*1.5,
+		base, torres = ['A','B','C'], altura_torres = 50*(quantidadeDiscos*.25), torre_A_x = -altura_torres*1.5, torre_B_x = 0, torre_C_x = altura_torres*1.5,
+		tAarray = [], tBarray = [], tCarray = [], discos = [], movimentos_origem = [], movimentos_destino = [],
+		movimentos_print = 1, movimentos_count = 0,
 
 		tl = new TimelineLite(),
 
-		torresObjs = [],//testing
-		discosObjs = [];//testing
+		torresObjs = [], discosObjs = [], intersectsObjs = [],
+		
+		radius = 100, theta = 0;
 
 		//let's rock
 			pre_init();
@@ -70,8 +70,8 @@
 				container.appendChild( textos );
 
 				var select = document.getElementById("select");
-				for(index in escolher_quantidade_discos) {
-					select.options[select.options.length] = new Option( escolher_quantidade_discos[index], escolher_quantidade_discos[index] );
+				for(index in escolherQuantidadeDiscos) {
+					select.options[select.options.length] = new Option( escolherQuantidadeDiscos[index], escolherQuantidadeDiscos[index] );
 				}
 			}
 
@@ -79,7 +79,7 @@
 			function init()
 			{
 				var select = document.getElementById("select");
-				quantidade_discos = select.options[select.selectedIndex].value;
+				quantidadeDiscos = select.options[select.selectedIndex].value;
 				automatico = document.getElementById("automatico").checked;
 
 				$('#select').remove();
@@ -94,81 +94,122 @@
 		//init_3D
 			function init_3D( )
 			{
-				camera = new THREE.PerspectiveCamera( 70, window.innerWidth / window.innerHeight, 1, 1000 );
-				camera.position.y = 50;
-				camera.position.z = 300;
-				
+				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, NEAR, FAR );
+				camera.position.set( 300, 350, 600 );
+
 				controls = new THREE.OrbitControls( camera );
 
+				//scene
 				scene = new THREE.Scene();
+				scene.fog = new THREE.Fog( 0xffaa55, 1000, FAR );
+				THREE.ColorUtils.adjustHSV( scene.fog.color, 0.02, -0.15, -0.65 );
 
-				var light = new THREE.DirectionalLight( 0xffffff, 2 );
-				light.position.set( 1, 1, 1 ).normalize();
+				//lights
+				var ambient = new THREE.AmbientLight( 0x222222 );
+				scene.add( ambient );
+
+				light = new THREE.SpotLight( 0xffffff, 1,0, Math.PI, 1 );
+				light.position.set( 200, 1500, 1000 );
+				light.target.position.set( 0, 0, 0 );
+
+				light.castShadow = true;
+
+				light.shadowCameraNear = 1000;
+				light.shadowCameraFar = camera.far;
+				light.shadowCameraFov = 15;
+
+				//light.shadowCameraVisible = true;
+
+				light.shadowBias = 0.0001;
+				light.shadowDarkness = 0.5;
+
+				light.shadowMapWidth = SHADOW_MAP_WIDTH;
+				light.shadowMapHeight = SHADOW_MAP_HEIGHT;
+
 				scene.add( light );
-				var light = new THREE.DirectionalLight( 0xffffff );
-				light.position.set( -1, -1, -1 ).normalize();
-				scene.add( light );
 
-				base_geometry = new THREE.CubeGeometry( altura_torres*6, altura_torres*2, 12 );
-				torre_geometry = new THREE.CylinderGeometry(6, 6, altura_torres, 12, false);
-
-				base = new THREE.Mesh( base_geometry, new THREE.MeshLambertMaterial( { color: 0x663300 /*Math.random() * 0xffffff*/ } ) );
+				//piso
+				var piso = new THREE.Mesh( new THREE.PlaneGeometry( 100, 100, 100 ), new THREE.MeshPhongMaterial( { color: 0xffdd99 } ) );
+				piso.position.set( 0, -10, 0 );
+				piso.rotation.x = -Math.PI / 2;
+				piso.scale.set( 50, 50, 50 );
+				piso.castShadow = false;
+				piso.receiveShadow = true;
+				piso.doubleSided = true;
+				scene.add( piso );
+				
+				//base
+				var base = new THREE.Mesh( new THREE.CubeGeometry( altura_torres*6, altura_torres*2, 12 ), new THREE.MeshLambertMaterial( { color: 0x663300 /*Math.random() * 0xffffff*/ } ) );
 				base.position.set(0,-8,0);
 				base.rotation.x = -Math.PI/2;
+				base.castShadow = true;
+				base.receiveShadow = true;
 				scene.add( base );
-				torreA = new THREE.Mesh( torre_geometry, new THREE.MeshLambertMaterial( { color: 0x663300 } ) );
-				torreA.position.set(torre_a_x, altura_torres/2-2, 0);
-				torreA.name = "A";
-				torresObjs.push( torreA );
-				scene.add( torreA );
-				torreB = new THREE.Mesh( torre_geometry, new THREE.MeshLambertMaterial( { color: 0x663300 } ) );
-				torreB.position.set(torre_b_x, altura_torres/2-2, 0);
-				torreB.name = "B";
-				torresObjs.push( torreB );
-				scene.add( torreB );
-				torreC = new THREE.Mesh( torre_geometry, new THREE.MeshLambertMaterial( { color: 0x663300 } ) );
-				torreC.position.set(torre_c_x, altura_torres/2-2, 0);
-				torreC.name = "C";
-				torresObjs.push( torreC );
-				scene.add( torreC );
 
-				var extrudeSettings = {
-					amount: spaco/3,
-					steps: 2,
-					bevelSegments: 22,
-					bevelSize: 11, 
-					bevelThickness: spaco/3 };
-
-				j = quantidade_discos-1;
-				for ( var i = 0; i<quantidade_discos; i++ )
+				//torres
+				for (var i in torres)
 				{
+					eval("torre"+torres[i] + " = new THREE.Mesh( new THREE.CylinderGeometry(6, 6, altura_torres, 12, false), new THREE.MeshLambertMaterial( { color: 0x663300 } ) )");
+					eval("torre"+torres[i] + ".position.set(torre_"+torres[i]+"_x, altura_torres/2-2, 0)");
+					eval("torre"+torres[i] + ".name = torres[i]");
+					eval("torre"+torres[i] + ".castShadow = true");
+					eval("torre"+torres[i] + ".receiveShadow = true");
+					torresObjs.push( eval("torre"+torres[i]) );
+					intersectsObjs.push( eval("torre"+torres[i]) );
+					scene.add( eval("torre"+torres[i]) );
+				}
 
+				//discos
+				for ( var i = 0; i<quantidadeDiscos; i++ )
+				{
 					var arcShape = new THREE.Shape();
 					arcShape.absarc( 0, 0, 20+(i*4), 0, Math.PI*2, false );
 					var holePath = new THREE.Shape();
 					holePath.absarc( 0, 0,18, 0, Math.PI*2, true );
 					arcShape.holes.push( holePath );
-
-					var disco = "disco"+i;
-					eval(disco + " = new THREE.Mesh( new THREE.ExtrudeGeometry( arcShape, extrudeSettings ), new THREE.MeshLambertMaterial( { color: cores_discos[i]  } ) )"); //Math.random() * 0xffffff
-					eval(disco + ".rotation.x = -Math.PI/2");// = ( Math.random() * 360 ) * Math.PI / 180;
-					eval(disco + ".position.set(torre_a_x,j*spaco,0)");
-					eval(disco + ".id = i");
-					eval(disco + ".name = i");
-					scene.add( eval(disco) );
-					discosObjs.push( eval(disco) );
-					tAarray.push( eval(disco).id );
+					
+					var smooth = new THREE.ExtrudeGeometry( arcShape, extrudeSettings = { amount: tamanho/3, steps: 2, bevelSegments: 22, bevelSize: 11, bevelThickness: tamanho/3 } );
+					/*	smooth.mergeVertices();
+					var modifier = new THREE.SubdivisionModifier();
+						modifier.modify( smooth );*/
+					eval("disco"+i + " = new THREE.Mesh( smooth, new THREE.MeshLambertMaterial( { color: cores_discos[i]  } ) )"); //Math.random() * 0xffffff
+					eval("disco"+i + ".rotation.x = -Math.PI/2");// = ( Math.random() * 360 ) * Math.PI / 180;
+					eval("disco"+i + ".position.set(torre_A_x,altura_torres*5,0)");
+					eval("disco"+i + ".id = i");
+					eval("disco"+i + ".name = 'A'");
+					eval("disco"+i + ".castShadow = true");
+					eval("disco"+i + ".receiveShadow = true");
+					scene.add( eval("disco"+i) );
+					discosObjs.push( eval("disco"+i) );
+					intersectsObjs.push( eval("disco"+i) );
+					tAarray.push( eval("disco"+i).id );
+				}
+				//discos tween
+				j = quantidadeDiscos-1;
+				for ( var i = 0; i<quantidadeDiscos; i++ )
+				{
+					tl.to(eval("disco"+j).position, velocidadeTorres, { y: i*tamanho, ease:Strong.easeOut } );
 					j--;
 				}
-			
+				tl.from(camera.position, velocidadeTorres*6, { x: 300, y: 200, z: -180, ease:Strong.easeInOut } );
+				
+				
+
+				//projector
 				projector = new THREE.Projector();
 
+				//renderer
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.sortObjects = false;
 				renderer.setSize( window.innerWidth, window.innerHeight );
-
+				//renderer.domElement.style.position = "relative";
+				//renderer.domElement.style.top = MARGIN + 'px';
+				container.appendChild( renderer.domElement );
+				renderer.shadowMapEnabled = true;
+				renderer.shadowMapSoft = true;
 				container.appendChild(renderer.domElement);
 
+				//stats
 				stats = new Stats();
 				stats.domElement.style.position = 'absolute';
 				stats.domElement.style.top = '0px';
@@ -183,55 +224,40 @@
 				TweenLite.ticker.addEventListener("tick", render);
 			}
 
-		//subir
-			function subir( disco, origem, destino )
-			{
-				//console.log(origem + " " +destino);
-				//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
-				obj = eval("disco"+disco);
+		//_subir
+			function _subir( disco, origem, destino )
+			{	//console.log(origem + " " +destino);//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
+				eval("t"+origem+"array").sort().shift();
 
-				if( origem == 'A' ) tAarray.sort().shift(); 
-				if( origem == 'B' ) tBarray.sort().shift();
-				if( origem == 'C' ) tCarray.sort().shift();
-
-				if ( destino == 'A' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: torre_A} );
-				else if ( destino == 'B' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: torre_B} );
-				else if ( destino == 'C' ) tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: torre_C} );
-				else tl.to(obj.position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn } );
-
-				if ( !automatico ) {
+				if ( automatico )
+					tl.to(eval("disco"+disco).position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn, onComplete: _torre, onCompleteParams:[eval("disco"+disco),destino] } );
+				else {
+					discoSuspenso = eval("disco"+disco);
+					tl.to(eval("disco"+disco).position, velocidadeTorres, { y: altura_torres+10, ease:Expo.easeIn } );
 					document.removeEventListener( 'mousedown', onDocumentMouseDown, false );
 					document.addEventListener( 'mousedown', onDocumentMouseDownTowers, false );
 				}
 			}
-
-		//descer
-			function descer( destino )
+		//torre
+			function _torre ( obj, destino )
 			{
-				if ( destino == 'A' || destino == 'B' || destino == 'C')
-				{
-					if ( destino == 'A' ) torre_A(obj);
-					if ( destino == 'B' ) torre_B(obj);
-					if ( destino == 'C' ) torre_C(obj);
-					
-					document.removeEventListener( 'mousedown', onDocumentMouseDownTowers, false );
-					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-					obj = null;
-				}
+				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:eval("torre_"+destino+"_x")/2, y:altura_torres*2}, {x:eval("torre_"+destino+"_x"), y:altura_torres+10}]}, ease:Quart.easeOut } );
+				tl.to(obj.position, velocidadeTorres/2, { y: eval("t"+destino+"array").length*tamanho, ease:Bounce.easeOut, onComplete: proximo} );
+				eval("t"+destino+"array").unshift(obj.id);
+				document.getElementById('movimentos').innerHTML = movimentos_print++;
 			}
 
 		//proximo
 			function proximo()
 			{
-				if ( automatico && discos.length-1 > aux )
+				if ( automatico && discos.length-1 > movimentos_count )
 				{
-					aux++;
-					subir( discos[aux]-1, movimentos_origem[aux], movimentos_destino[aux] );
+					movimentos_count++;
+					_subir( discos[movimentos_count]-1, movimentos_origem[movimentos_count], movimentos_destino[movimentos_count] );
 					
 				}else{
 					console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
 				}
-
 			}
 
 		//init_solution
@@ -247,39 +273,9 @@
 						hanoiArray( disco-1, temp, inicio, fim );
 					}
 				}
-				hanoiArray(quantidade_discos, 'A','B','C');
+				hanoiArray(quantidadeDiscos, 'A','B','C');
 
-				if ( automatico ) subir( discos[aux]-1, movimentos_origem[aux], movimentos_destino[aux] );
-
-				//console.log('Menor soluçao: '+movimentos.length+' movimentos.');
-			}
-
-		//torre_A
-			function torre_A()
-			{
-				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_a_x/2, y:altura_torres*2}, {x:torre_a_x, y:altura_torres+10}]}, ease:Quart.easeOut } );
-				tl.to(obj.position, velocidadeTorres/2, { y: tAarray.length*spaco, ease:Bounce.easeOut, onComplete: proximo} );
-
-				tAarray.unshift(obj.id);
-				document.getElementById('movimentos').innerHTML = movimentos_count++;
-			}
-		//torre_B
-			function torre_B()
-			{
-				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_b_x/2, y:altura_torres*2}, {x:torre_b_x, y:altura_torres+10}]}, ease:Quart.easeOut });
-				tl.to(obj.position, velocidadeTorres/2, { y: tBarray.length*spaco, ease:Bounce.easeOut, onComplete: proximo});
-				
-				tBarray.unshift(obj.id);
-				document.getElementById('movimentos').innerHTML = movimentos_count++;
-			}
-		//torre_C
-			function torre_C()
-			{
-				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:torre_c_x/2, y:altura_torres*2}, {x:torre_c_x, y:altura_torres+10}]}, ease:Quart.easeOut } );
-				tl.to(obj.position, velocidadeTorres/2, { y: tCarray.length*spaco, ease:Bounce.easeOut, onComplete: proximo} );
-
-				tCarray.unshift(obj.id);
-				document.getElementById('movimentos').innerHTML = movimentos_count++;
+				if ( automatico ) _subir( discos[movimentos_count]-1, movimentos_origem[movimentos_count], movimentos_destino[movimentos_count] );
 			}
 
 		//onWindowResize
@@ -310,19 +306,9 @@
 
 				var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
 
-				var intersects = ray.intersectObjects( discosObjs );//scene.children
+				var intersects = ray.intersectObjects( discosObjs );
 				
-				if ( intersects.length > 0 ) 
-				{
-					//console.log(intersects[0].object.name);
-					//console.log(intersects[0].object.id);
-					
-					if ( intersects[0].object.position.x == torre_a_x ) var origem = "A";
-					else if ( intersects[0].object.position.x == torre_b_x ) var origem = "B";
-					else if ( intersects[0].object.position.x == torre_c_x ) var origem = "C";
-
-					subir( intersects[0].object.id, origem );//subir( disco, origem, destino )
-				}
+				if ( intersects.length > 0 ) _subir( intersects[0].object.id, intersects[0].object.name );
 			}
 
 		//onDocumentMouseDownTowers
@@ -335,14 +321,14 @@
 
 				var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
 
-				var intersects = ray.intersectObjects( torresObjs );//scene.children
+				var intersects = ray.intersectObjects( torresObjs );
 
 				if ( intersects.length > 0 )
-				{
-					//console.log(intersects[0].object.name);
-					//console.log(intersects[0].object.id);
-					
-					descer( intersects[0].object.name );//descer( destino )
+				{	
+					discoSuspenso.name = intersects[0].object.name;
+					_torre( discoSuspenso, intersects[0].object.name );
+					document.removeEventListener( 'mousedown', onDocumentMouseDownTowers, false );
+					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				}
 			}
 
@@ -367,11 +353,9 @@
 				stats.update();
 			}
 
-		var radius = 100, theta = 0;
 		//render
 			function render()
 			{
-
 				theta += 0.2;
 				
 				TWEEN.update();
@@ -379,8 +363,7 @@
 				scene.position.y = radius * Math.sin( (mouse.y*30) * Math.PI / 360 );
 				scene.position.x = radius * Math.sin( (mouse.x*30) * Math.PI / 360 );
 				scene.position.z = radius * Math.sin( (mouse.y*30) * Math.PI / 360 );
-				/*camera.position.y = radius * Math.sin( theta * Math.PI / 360 );
-				camera.position.z = radius * Math.cos( theta * Math.PI / 360 );*/
+				//console.log("x: "+camera.position.x+"  y: "+camera.position.y+"  z: "+camera.position.z);
 
 				camera.lookAt( scene.position );
 
@@ -390,7 +373,7 @@
 
 				var ray = new THREE.Ray( camera.position, vector.subSelf( camera.position ).normalize() );
 
-				var intersects = ray.intersectObjects( scene.children );
+				var intersects = ray.intersectObjects( intersectsObjs );//scene.children
 
 				if ( intersects.length > 0 )
 				{
@@ -400,16 +383,13 @@
 
 						INTERSECTED = intersects[ 0 ].object;
 						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
-						INTERSECTED.material.emissive.setHex( 0xff0a00 );
+						INTERSECTED.material.emissive.setHex( 0x222222 );
 					}
-				}
-				else
-				{
-
+				} else {
 					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
-
 					INTERSECTED = null;
 				}
+				
 				renderer.render( scene, camera );
 			}
 
