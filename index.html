@@ -24,27 +24,29 @@
 		<script>
 
 		var container, stats, camera, controls, scene, projector, renderer, NEAR = 5, FAR = 2000,
-		
+
 		light, SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024,
 		MARGIN = 100, SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight - 2 * MARGIN, FLOOR = -250,
-
 
 		mouse = new THREE.Vector2(), offset = new THREE.Vector3(), INTERSECTED, SELECTED,
 
 		geometry, cube, object, discoSuspenso,
-
+		
 		automatico=true,
-		tamanho = 8,
-		quantidadeDiscos = 5,
-		velocidadeTorres = .375,
-		escolherQuantidadeDiscos = [quantidadeDiscos,3,4,5,6,7,8,9,10,11,12,13,14,15],
-		cores_discos=[0xCC0000,0x009900,0x3333FF,0x993366,0x666666],
+		quantidadeDiscos = 3,
+		escolherQuantidadeDiscos = [3,4,5,6,7,8,9,10],
+		escolherVelocidade = [ ["Muito Lento",1],["Lento",.6],["Normal",.3],["Rápido",.05],["Super Rápido",.005],],
+		velocidadeTorres = .3,
+		tamanho = 9,
+		cores_discos=[0xDB0504,0xE9C200,0x49840E,0x3366FF,0xFE389B,0xFC7100,0x6549B0,0x1A97A9,0x707072,0xFFFFCC],
 
-		base, torres = ['A','B','C'], altura_torres = 50*(quantidadeDiscos*.25), torre_A_x = -altura_torres*1.5, torre_B_x = 0, torre_C_x = altura_torres*1.5,
+		base,
+		torres = ['A','B','C'],
+		altura_torres, torre_A_x, torre_B_x, torre_C_x, torre_A_z = -20, torre_B_z = 20, torre_C_z = -20, 
 		tAarray = [], tBarray = [], tCarray = [], discos = [], movimentos_origem = [], movimentos_destino = [],
 		movimentos_print = 1, movimentos_count = 0,
 
-		tl = new TimelineLite(),
+		tl = new TimelineLite(), pause_resume = true,
 
 		torresObjs = [], discosObjs = [], intersectsObjs = [],
 		
@@ -52,7 +54,7 @@
 
 		//let's rock
 			pre_init();
-			init();
+			//init();
 
 		//pre_init
 			function pre_init()
@@ -66,29 +68,63 @@
 				textos.style.width = '100%';
 				textos.style.textAlign = 'center';
 				textos.id = 'textos';
-				textos.innerHTML = '<input type="checkbox" id="automatico" checked="checked">Automatico</input><div id"infors"><select id="select"></select><input type="button" id="iniciar" value="Iniciar" onclick="init()" /></div>';
+
+				textos.innerHTML = '<div id="infors">'+
+				'<input type="checkbox" id="automatico" checked="checked">Automatico</input><br><br>'+
+				'Número de discos: <select id="escolherQuantidadeDiscos"></select><br><br>'+
+				'Velocidade: <select id="escolherVelocidade"></select><br><br>'+
+				'<input type="button" id="iniciar" value="Iniciar" onclick="init()" /><br><br>'+
+				'</div>';
 				container.appendChild( textos );
 
-				var select = document.getElementById("select");
+				var select = document.getElementById("escolherQuantidadeDiscos");
 				for(index in escolherQuantidadeDiscos) {
-					select.options[select.options.length] = new Option( escolherQuantidadeDiscos[index], escolherQuantidadeDiscos[index] );
+					select.options[index] = new Option( escolherQuantidadeDiscos[index], escolherQuantidadeDiscos[index] );
+					if (select.options[index].text == 4) select.selectedIndex = [index];
+				}
+				var select = document.getElementById("escolherVelocidade");
+				
+				for(index in escolherVelocidade) {
+					select.options[index] = new Option( escolherVelocidade[index][0], escolherVelocidade[index][1] );
+					if (select.options[index].text == "Normal") select.selectedIndex = [index];
 				}
 			}
 
 		//init
 			function init()
 			{
-				var select = document.getElementById("select");
+				var select = document.getElementById("escolherQuantidadeDiscos");
 				quantidadeDiscos = select.options[select.selectedIndex].value;
+				var select = document.getElementById("escolherVelocidade");
+				velocidadeTorres = select.options[select.selectedIndex].value;
 				automatico = document.getElementById("automatico").checked;
+				altura_torres = 50*(quantidadeDiscos*.22), torre_A_x = -altura_torres*2, torre_B_x = 0, torre_C_x = altura_torres*2;
 
-				$('#select').remove();
+				$('#escolherQuantidadeDiscos').remove();
+				$('#escolherVelocidade').remove();
 				$('#iniciar').remove();
-				document.getElementById('textos').innerHTML = '<div>Movimento: <b id="movimentos">0</b></div>';
+				
+				if ( automatico )
+					document.getElementById('textos').innerHTML = '<input type="button" id="pause" value="Pause" onclick="pause_resume?pausar():resumar();" /><br><br><div>Movimento: <b id="movimentos">0</b></div>';
+				else
+					document.getElementById('textos').innerHTML = '<div>Movimento: <b id="movimentos">0</b></div>';
 
 				init_3D();
 				animate();
 				init_solution();
+			}
+			
+			function pausar(){
+				console.log("Pausar")
+				pause_resume = false;
+				document.getElementById('pause').value = "Resume";
+				tl.pause();
+			}
+			function resumar(){
+				console.log("Resume")
+				pause_resume = true;
+				document.getElementById('pause').value = "Pause";
+				tl.resume();
 			}
 
 		//init_3D
@@ -150,7 +186,7 @@
 				for (var i in torres)
 				{
 					eval("torre"+torres[i] + " = new THREE.Mesh( new THREE.CylinderGeometry(6, 6, altura_torres, 12, false), new THREE.MeshLambertMaterial( { color: 0x663300 } ) )");
-					eval("torre"+torres[i] + ".position.set(torre_"+torres[i]+"_x, altura_torres/2-2, 0)");
+					eval("torre"+torres[i] + ".position.set(torre_"+torres[i]+"_x, altura_torres/3-2, torre_"+torres[i]+"_z)");
 					eval("torre"+torres[i] + ".name = torres[i]");
 					eval("torre"+torres[i] + ".castShadow = true");
 					eval("torre"+torres[i] + ".receiveShadow = true");
@@ -158,6 +194,7 @@
 					intersectsObjs.push( eval("torre"+torres[i]) );
 					scene.add( eval("torre"+torres[i]) );
 				}
+				tl.staggerFrom([ base.position, eval("torre"+torres[0]).position,eval("torre"+torres[1]).position,eval("torre"+torres[2]).position ], 1, { x: 500, ease:Strong.easeOut } );
 
 				//discos
 				for ( var i = 0; i<quantidadeDiscos; i++ )
@@ -172,9 +209,9 @@
 					/*	smooth.mergeVertices();
 					var modifier = new THREE.SubdivisionModifier();
 						modifier.modify( smooth );*/
-					eval("disco"+i + " = new THREE.Mesh( smooth, new THREE.MeshLambertMaterial( { color: cores_discos[i]  } ) )"); //Math.random() * 0xffffff
+					eval("disco"+i + " = new THREE.Mesh( smooth, new THREE.MeshLambertMaterial( { color: cores_discos[i] } ) )"); //Math.random() * 0xffffff
 					eval("disco"+i + ".rotation.x = -Math.PI/2");// = ( Math.random() * 360 ) * Math.PI / 180;
-					eval("disco"+i + ".position.set(torre_A_x,altura_torres*5,0)");
+					eval("disco"+i + ".position.set(torre_A_x,altura_torres*10,torre_A_z)");
 					eval("disco"+i + ".id = i");
 					eval("disco"+i + ".name = 'A'");
 					eval("disco"+i + ".castShadow = true");
@@ -188,12 +225,10 @@
 				j = quantidadeDiscos-1;
 				for ( var i = 0; i<quantidadeDiscos; i++ )
 				{
-					tl.to(eval("disco"+j).position, velocidadeTorres, { y: i*tamanho, ease:Strong.easeOut } );
+					tl.to(eval("disco"+j).position, .2, { y: i*tamanho, ease:Strong.easeOut } );
 					j--;
 				}
-				tl.from(camera.position, velocidadeTorres*6, { x: 300, y: 200, z: -180, ease:Strong.easeInOut } );
-				
-				
+				tl.from(camera.position, 1, { x: 300, y: 170, z: -180, ease:Strong.easeInOut } );
 
 				//projector
 				projector = new THREE.Projector();
@@ -217,14 +252,13 @@
 
 				if ( !automatico ) document.addEventListener( 'mousedown', onDocumentMouseDown, false );
 				document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-				//document.addEventListener( 'keydown', onDocumentKeydown, false );
 
 				window.addEventListener( 'resize', onWindowResize, false );
 				
 				TweenLite.ticker.addEventListener("tick", render);
 			}
 
-		//_subir
+		//subir
 			function _subir( disco, origem, destino )
 			{	//console.log(origem + " " +destino);//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
 				eval("t"+origem+"array").sort().shift();
@@ -238,10 +272,11 @@
 					document.addEventListener( 'mousedown', onDocumentMouseDownTowers, false );
 				}
 			}
+
 		//torre
 			function _torre ( obj, destino )
-			{
-				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:eval("torre_"+destino+"_x")/2, y:altura_torres*2}, {x:eval("torre_"+destino+"_x"), y:altura_torres+10}]}, ease:Quart.easeOut } );
+			{	//discoSuspenso.name = destino;
+				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:eval("torre_"+destino+"_x")/2, y:altura_torres*2, z:eval("torre_"+destino+"_z")/2}, {x:eval("torre_"+destino+"_x"), y:altura_torres+10, z:eval("torre_"+destino+"_z")}]}, ease:Quart.easeOut } );
 				tl.to(obj.position, velocidadeTorres/2, { y: eval("t"+destino+"array").length*tamanho, ease:Bounce.easeOut, onComplete: proximo} );
 				eval("t"+destino+"array").unshift(obj.id);
 				document.getElementById('movimentos').innerHTML = movimentos_print++;
@@ -250,13 +285,28 @@
 		//proximo
 			function proximo()
 			{
+				//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
 				if ( automatico && discos.length-1 > movimentos_count )
 				{
 					movimentos_count++;
 					_subir( discos[movimentos_count]-1, movimentos_origem[movimentos_count], movimentos_destino[movimentos_count] );
-					
 				}else{
-					console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
+					if ( eval("t"+torres[1]+"array").length == quantidadeDiscos || eval("t"+torres[2]+"array").length == quantidadeDiscos )
+					{
+						
+						tl.to(camera.position, 1, { x: -318, y: 170, z: 180, ease:Strong.easeInOut } );
+						
+						if ( ! automatico )
+						{
+							console.log("Parabéns");
+						
+							var newtext = document.createTextNode(" Parabéns! ");
+							var para = document.getElementById("textos");
+							para.appendChild(newtext);
+						}
+						$('#pause').remove();
+					}
+						
 				}
 			}
 
@@ -324,22 +374,17 @@
 				var intersects = ray.intersectObjects( torresObjs );
 
 				if ( intersects.length > 0 )
-				{	
-					discoSuspenso.name = intersects[0].object.name;
-					_torre( discoSuspenso, intersects[0].object.name );
-					document.removeEventListener( 'mousedown', onDocumentMouseDownTowers, false );
-					document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-				}
-			}
-
-		//onDocumentKeydown
-			function onDocumentKeydown( event )
-			{
-				switch(event.keyCode)
 				{
-					case 32: paused = paused ? false : true; break;
-					case 38: camera.position.z -= 10; break;
-					case 40: camera.position.z += 10; break;
+					//console.log( discoSuspenso.id < eval("t"+intersects[0].object.name+"array")[0] || eval("t"+intersects[0].object.name+"array")[0] == undefined );
+					if ( discoSuspenso.id < eval("t"+intersects[0].object.name+"array")[0] || eval("t"+intersects[0].object.name+"array")[0] == undefined )
+					{
+						discoSuspenso.name = intersects[0].object.name;
+						_torre( discoSuspenso, intersects[0].object.name );
+						document.removeEventListener( 'mousedown', onDocumentMouseDownTowers, false );
+						document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+					} else {
+						console.log('maior');
+					}
 				}
 			}
 
