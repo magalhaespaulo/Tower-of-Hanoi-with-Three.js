@@ -23,12 +23,9 @@
 
 		<script>
 
-		var container, stats, camera, controls, scene, projector, renderer, NEAR = 5, FAR = 2000,
+		var container, stats, camera, controls, scene, projector, renderer, 
 
-		light, SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024,
-		MARGIN = 100, SCREEN_WIDTH = window.innerWidth, SCREEN_HEIGHT = window.innerHeight - 2 * MARGIN, FLOOR = -250,
-
-		mouse = new THREE.Vector2(), offset = new THREE.Vector3(), INTERSECTED, SELECTED,
+		light, SHADOW_MAP_WIDTH = 2048, SHADOW_MAP_HEIGHT = 1024, NEAR = 5, FAR = 2000, mouse = new THREE.Vector2(), INTERSECTED,
 
 		geometry, cube, object, discoSuspenso,
 		
@@ -57,8 +54,8 @@
 			//init();
 
 		//pre_init
-			function pre_init()
-			{
+			function pre_init() {
+
 				container = document.createElement( 'div' );
 				document.body.appendChild( container );
 
@@ -83,16 +80,16 @@
 					if (select.options[index].text == 4) select.selectedIndex = [index];
 				}
 				var select = document.getElementById("escolherVelocidade");
-				
 				for(index in escolherVelocidade) {
 					select.options[index] = new Option( escolherVelocidade[index][0], escolherVelocidade[index][1] );
 					if (select.options[index].text == "Normal") select.selectedIndex = [index];
 				}
+
 			}
 
 		//init
-			function init()
-			{
+			function init() {
+
 				var select = document.getElementById("escolherQuantidadeDiscos");
 				quantidadeDiscos = select.options[select.selectedIndex].value;
 				var select = document.getElementById("escolherVelocidade");
@@ -104,35 +101,38 @@
 				$('#escolherVelocidade').remove();
 				$('#iniciar').remove();
 				
-				if ( automatico )
-					document.getElementById('textos').innerHTML = '<input type="button" id="pause" value="Pause" onclick="pause_resume?pausar():resumar();" /><br><br><div>Movimento: <b id="movimentos">0</b></div>';
-				else
-					document.getElementById('textos').innerHTML = '<div>Movimento: <b id="movimentos">0</b></div>';
+				if ( automatico ) document.getElementById('textos').innerHTML = '<input type="button" id="pause_resume" value="Pause" onclick="pause_resume?pausar():resumar();" /><br><br><div>Movimento: <b id="movimentos">0</b></div>';
+				else document.getElementById('textos').innerHTML = '<div>Movimento: <b id="movimentos">0</b></div>';
 
 				init_3D();
 				animate();
 				init_solution();
+
 			}
 			
-			function pausar(){
-				console.log("Pausar")
+			function pausar() {
+
 				pause_resume = false;
-				document.getElementById('pause').value = "Resume";
+				document.getElementById('pause_resume').value = "Resume";
 				tl.pause();
+
 			}
-			function resumar(){
-				console.log("Resume")
+			function resumar() {
+
 				pause_resume = true;
-				document.getElementById('pause').value = "Pause";
+				document.getElementById('pause_resume').value = "Pause";
 				tl.resume();
+
 			}
 
 		//init_3D
-			function init_3D( )
-			{
+			function init_3D() {
+
+				//camera
 				camera = new THREE.PerspectiveCamera( 30, window.innerWidth / window.innerHeight, NEAR, FAR );
 				camera.position.set( 300, 350, 600 );
-
+				
+				//controls
 				controls = new THREE.OrbitControls( camera );
 
 				//scene
@@ -183,8 +183,8 @@
 				scene.add( base );
 
 				//torres
-				for (var i in torres)
-				{
+				for (var i in torres) {
+
 					eval("torre"+torres[i] + " = new THREE.Mesh( new THREE.CylinderGeometry(6, 6, alturaTorres, 12, false), new THREE.MeshLambertMaterial( { color: 0x663300 } ) )");
 					eval("torre"+torres[i] + ".position.set(torre_"+torres[i]+"_x, alturaTorres/3-2, torre_"+torres[i]+"_z)");
 					eval("torre"+torres[i] + ".name = torres[i]");
@@ -193,12 +193,12 @@
 					torresObjs.push( eval("torre"+torres[i]) );
 					intersectsObjs.push( eval("torre"+torres[i]) );
 					scene.add( eval("torre"+torres[i]) );
+
 				}
-				tl.staggerFrom([ base.position, eval("torre"+torres[0]).position,eval("torre"+torres[1]).position,eval("torre"+torres[2]).position ], 1, { x: 500, ease:Strong.easeOut } );
 
 				//discos
-				for ( var i = 0; i<quantidadeDiscos; i++ )
-				{
+				for ( var i = 0; i<quantidadeDiscos; i++ ) {
+
 					var arcShape = new THREE.Shape();
 					arcShape.absarc( 0, 0, 20+(i*4), 0, Math.PI*2, false );
 					var holePath = new THREE.Shape();
@@ -206,9 +206,9 @@
 					arcShape.holes.push( holePath );
 					
 					var smooth = new THREE.ExtrudeGeometry( arcShape, extrudeSettings = { amount: tamanho/3, steps: 2, bevelSegments: 22, bevelSize: 11, bevelThickness: tamanho/3 } );
-					/*	smooth.mergeVertices();
-					var modifier = new THREE.SubdivisionModifier();
-						modifier.modify( smooth );*/
+						//smooth.mergeVertices();
+					//var modifier = new THREE.SubdivisionModifier();
+						//modifier.modify( smooth );
 					eval("disco"+i + " = new THREE.Mesh( smooth, new THREE.MeshLambertMaterial( { color: cores_discos[i] } ) )"); //Math.random() * 0xffffff
 					eval("disco"+i + ".rotation.x = -Math.PI/2");// = ( Math.random() * 360 ) * Math.PI / 180;
 					eval("disco"+i + ".position.set(torre_A_x,alturaTorres*10,torre_A_z)");
@@ -220,13 +220,16 @@
 					discosObjs.push( eval("disco"+i) );
 					intersectsObjs.push( eval("disco"+i) );
 					tAarray.push( eval("disco"+i).id );
+
 				}
-				//discos tween
+				//inicio da animacao
+				tl.staggerFrom([ base.position, eval("torre"+torres[0]).position,eval("torre"+torres[1]).position,eval("torre"+torres[2]).position ], 1, { x: 500, ease:Strong.easeOut } );
 				j = quantidadeDiscos-1;
-				for ( var i = 0; i<quantidadeDiscos; i++ )
-				{
+				for ( var i = 0; i<quantidadeDiscos; i++ ) {
+
 					tl.to(eval("disco"+j).position, .2, { y: i*tamanho, ease:Strong.easeOut } );
 					j--;
+
 				}
 				tl.from(camera.position, 1, { x: 300, y: 170, z: -180, ease:Strong.easeInOut } );
 
@@ -237,8 +240,6 @@
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
 				renderer.sortObjects = false;
 				renderer.setSize( window.innerWidth, window.innerHeight );
-				//renderer.domElement.style.position = "relative";
-				//renderer.domElement.style.top = MARGIN + 'px';
 				container.appendChild( renderer.domElement );
 				renderer.shadowMapEnabled = true;
 				renderer.shadowMapSoft = true;
@@ -259,69 +260,84 @@
 			}
 
 		//subir
-			function subir( disco, origem, destino )
-			{	//console.log(origem + " " +destino);//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
+			function subir( disco, origem, destino ) { //console.log(origem + " " +destino);//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
+
 				eval("t"+origem+"array").sort().shift();
 
-				if ( automatico )
+				if ( automatico ) {
+
 					tl.to(eval("disco"+disco).position, velocidadeTorres, { y: alturaTorres+10, ease:Expo.easeIn, onComplete: torre, onCompleteParams:[eval("disco"+disco),destino] } );
-				else {
+
+				} else {
+
 					discoSuspenso = eval("disco"+disco);
 					tl.to(eval("disco"+disco).position, velocidadeTorres, { y: alturaTorres+10, ease:Expo.easeIn } );
 					document.removeEventListener( 'mousedown', onDocumentMouseDownDiscs, false );
 					document.addEventListener( 'mousedown', onDocumentMouseDownTowers, false );
+
 				}
+
 			}
 
 		//torre
-			function torre ( obj, destino )
-			{	//discoSuspenso.name = destino;
+			function torre ( obj, destino ) { //discoSuspenso.name = destino;
+
 				tl.to(obj.position, velocidadeTorres*2, { bezier:{type:"soft", values:[{x:eval("torre_"+destino+"_x")/2, y:alturaTorres*2, z:eval("torre_"+destino+"_z")/2}, {x:eval("torre_"+destino+"_x"), y:alturaTorres+10, z:eval("torre_"+destino+"_z")}]}, ease:Quart.easeOut } );
 				tl.to(obj.position, velocidadeTorres/2, { y: eval("t"+destino+"array").length*tamanho, ease:Bounce.easeOut, onComplete: proximo} );
 				eval("t"+destino+"array").unshift(obj.id);
 				document.getElementById('movimentos').innerHTML = movimentos_print++;
+
 			}
 
 		//proximo
-			function proximo()
-			{
-				//console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
-				if ( automatico && discos.length-1 > movimentos_count )
-				{
+			function proximo() { //console.log("A: " + tAarray + " B: " + tBarray + " C: "+ tCarray);
+
+				if ( automatico && discos.length-1 > movimentos_count ) {
+
 					movimentos_count++;
 					subir( discos[movimentos_count]-1, movimentos_origem[movimentos_count], movimentos_destino[movimentos_count] );
-				}else{
-					if ( eval("t"+torres[1]+"array").length == quantidadeDiscos || eval("t"+torres[2]+"array").length == quantidadeDiscos )
-					{
+
+				} else {
+
+					if ( eval("t"+torres[1]+"array").length == quantidadeDiscos || eval("t"+torres[2]+"array").length == quantidadeDiscos ) {
 						
 						tl.to(camera.position, 1, { x: -318, y: 170, z: 180, ease:Strong.easeInOut } );
 						
-						if ( ! automatico )
-						{
+						if ( ! automatico ) {
+
 							document.removeEventListener( 'mousedown', onDocumentMouseDownDiscs, false );
 
 							var newtext = document.createTextNode(" Parabéns! ");
 							var para = document.getElementById("textos");
 							para.appendChild(newtext);
+
 						}
+
 						$('#pause').remove();
+
 					}
-						
+
 				}
+
 			}
 
-		//init_solution
-			function init_solution()
-			{
-				function hanoiArray(disco, inicio, temp, fim ){
+		//solution
+			function init_solution() {
+
+				function hanoiArray(disco, inicio, temp, fim ) {
 
 					if ( disco == 1 ) {
+
 						discos.push(disco); movimentos_origem.push(inicio); movimentos_destino.push(fim);
+
 					} else {
+
 						hanoiArray( disco-1, inicio, fim, temp );
 						discos.push(disco); movimentos_origem.push(inicio); movimentos_destino.push(fim);
 						hanoiArray( disco-1, temp, inicio, fim );
+
 					}
+
 				}
 				hanoiArray(quantidadeDiscos, 'A','B','C');
 
@@ -329,26 +345,28 @@
 			}
 
 		//onWindowResize
-			function onWindowResize()
-			{
+			function onWindowResize() {
+
 				camera.aspect = window.innerWidth / window.innerHeight;
 				camera.updateProjectionMatrix();
 
 				renderer.setSize( window.innerWidth, window.innerHeight );
+
 			}
 
 		//onDocumentMouseMove
-			function onDocumentMouseMove( event )
-			{
+			function onDocumentMouseMove( event ) {
+
 				event.preventDefault();
 
 				mouse.x = ( event.clientX / window.innerWidth ) * 2 - 1;
 				mouse.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
+
 			}
 
 		//onDocumentMouseDownDiscs
-			function onDocumentMouseDownDiscs( event )
-			{
+			function onDocumentMouseDownDiscs( event ) {
+
 				event.preventDefault();
 
 				var vector = new THREE.Vector3( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1, 0.5 );
@@ -358,16 +376,15 @@
 
 				var intersects = ray.intersectObjects( discosObjs );
 				
-				if ( intersects.length > 0 )
-				{
+				if ( intersects.length > 0 ) {
 					if ( intersects[0].object.id == eval("t"+intersects[0].object.name+"array")[0] )
 						subir( intersects[0].object.id, intersects[0].object.name );
 				}
 			}
 
 		//onDocumentMouseDownTowers
-			function onDocumentMouseDownTowers( event )
-			{
+			function onDocumentMouseDownTowers( event ) {
+
 				event.preventDefault();
 
 				var vector = new THREE.Vector3( mouse.x, mouse.y, 0.5 );
@@ -377,34 +394,39 @@
 
 				var intersects = ray.intersectObjects( torresObjs );
 
-				if ( intersects.length > 0 )
-				{
-					//console.log( discoSuspenso.id < eval("t"+intersects[0].object.name+"array")[0] || eval("t"+intersects[0].object.name+"array")[0] == undefined );
-					if ( discoSuspenso.id < eval("t"+intersects[0].object.name+"array")[0] || eval("t"+intersects[0].object.name+"array")[0] == undefined )
-					{
+				if ( intersects.length > 0 ) {
+
+					if ( discoSuspenso.id < eval("t"+intersects[0].object.name+"array")[0] || eval("t"+intersects[0].object.name+"array")[0] == undefined ) {
+
 						discoSuspenso.name = intersects[0].object.name;
 						torre( discoSuspenso, intersects[0].object.name );
 						document.removeEventListener( 'mousedown', onDocumentMouseDownTowers, false );
 						document.addEventListener( 'mousedown', onDocumentMouseDownDiscs, false );
+
 					} else {
+
 						console.log('maior');
+
 					}
+
 				}
+
 			}
 
 		//animate
-			function animate()
-			{
+			function animate() {
+
 				requestAnimationFrame( animate );
 				controls.update();
 				
 				render();
 				stats.update();
+
 			}
 
 		//render
-			function render()
-			{
+			function render() {
+
 				theta += 0.2;
 				
 				TWEEN.update();
@@ -424,22 +446,27 @@
 
 				var intersects = ray.intersectObjects( intersectsObjs );//scene.children
 
-				if ( intersects.length > 0 )
-				{
-					if ( INTERSECTED != intersects[ 0 ].object )
-					{
+				if ( intersects.length > 0 ) {
+
+					if ( INTERSECTED != intersects[ 0 ].object ) {
+
 						if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 
 						INTERSECTED = intersects[ 0 ].object;
 						INTERSECTED.currentHex = INTERSECTED.material.emissive.getHex();
 						INTERSECTED.material.emissive.setHex( 0x222222 );
+
 					}
+
 				} else {
+
 					if ( INTERSECTED ) INTERSECTED.material.emissive.setHex( INTERSECTED.currentHex );
 					INTERSECTED = null;
+
 				}
 				
 				renderer.render( scene, camera );
+
 			}
 
 		</script>
