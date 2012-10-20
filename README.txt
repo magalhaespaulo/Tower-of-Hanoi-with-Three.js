@@ -1,1 +1,1 @@
-online: <a href="http://treelabs.net/hanoi/">see project/</a>
+look at this: http://treelabs.net/hanoi
