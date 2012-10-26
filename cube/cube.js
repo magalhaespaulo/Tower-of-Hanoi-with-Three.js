@@ -61,7 +61,7 @@ Cube.prototype = {
 	},
 
 	animate: function () {
-		requestAnimationFrame( window.globalArray[0].animate );
+		requestAnimationFrame( globalArray[0].animate );
 
 		for ( var i=0; i<globalCounter; i++ ) {
 			globalArray[i].mesh.rotation.x += 0.005;
