@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt_BR">
+	<head>
+		<title>Three JS - Cube Example</title>
+		<meta charset="utf-8">
+		<style>
+			body {
+				margin: 0px;
+				background-color: #000;
+				overflow: hidden;
+				position: absolute;
+				width: 100%;
+				height: 100%;
+			}
+			#zero {
+				width: 100%;
+				height: 100%;
+				background:#0ff000;
+			}#um {
+				width: 100%;
+				height: 75%;
+				background:#EDB9EA;
+			}#dois {
+				width: 100%;
+				height: 50%;
+				background:#0000FF;
+			}#tres {
+				width: 100%;
+				height: 75%;
+				background:#d00022;
+			}#quatro {
+				width: 100%;
+				height: 100%;
+				background:#F0CC22;
+			}
+			div.section {
+				width: 20%;
+				height: 100%;
+				float:left;margin: 0px;
+			}div.column {
+				height: 100%;margin: 0px;
+			}
+		</style>
+	</head>
+	<body>
+
+		<div class="section">
+			<div class="column">
+				<div id="zero"></div>
+			</div>
+		</div>
+		<div class="section">
+			<div class="column">
+				<div id="um"></div>
+			</div>
+		</div>
+		<div class="section">
+			<div class="column">
+				<div id="dois"></div>
+			</div>
+		</div>
+		<div class="section">
+			<div class="column">
+				<div id="tres"></div>
+			</div>
+		</div>
+		<div class="section">
+			<div class="column">
+				<div id="quatro"></div>
+			</div>
+		</div>
+
+	<script src="js/jquery.js"></script>
+    <script src="js/three.min.js"></script>
+    <script src="js/greensock/TweenMax.min.js"></script>
+    <script src="js/cube.js"></script>
+    <script>
+
+		var cube1 = new Cube("zero");
+		var cube2 = new Cube("um");
+		var cube3 = new Cube("dois");
+		var cube4 = new Cube("tres");
+		var cube5 = new Cube("quatro");
+
+    </script>
+  </body>
+</html>
