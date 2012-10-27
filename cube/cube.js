@@ -1,13 +1,12 @@
-var globalCounter = 0;
-var globalArray = [];
+function Cube (name) {
 
-function Cube ( name ) {
-	this.id = globalCounter;
+	if (typeof cubes === 'undefined') cubes = [];
+
+	this.id = cubes.length;
 	this.name = name;
-	this.div = document.getElementById(this.name);
-	globalArray.push(this);
+	this.div = document.getElementById(name);
+	cubes.push(this);
 	this.init();
-	globalCounter++;
 }
 
 Cube.prototype = {
@@ -19,8 +18,8 @@ Cube.prototype = {
 		this.createScene();
 		this.createObject();
 		this.animate();
-		this.tween();
-		window.addEventListener( 'resize', this.onWindowResize, false );
+		this.animation();
+		window.addEventListener('resize', this.onWindowResize, false);
 	},
 
 	createTimeline: function () {
@@ -51,26 +50,26 @@ Cube.prototype = {
 		this.mesh = new THREE.Mesh( geometry, material );
 		this.scene.add( this.mesh );
 	},
-	
+
 	onWindowResize: function () {
-		for ( var i=0; i<globalCounter; i++ ) {
-			globalArray[i].camera.aspect = globalArray[i].div.clientWidth / globalArray[i].div.clientHeight;
-			globalArray[i].camera.updateProjectionMatrix();
-			globalArray[i].renderer.setSize( globalArray[i].div.clientWidth, globalArray[i].div.clientHeight );
+		for (var i=0; i<cubes.length; i++){
+			cubes[i].camera.aspect = cubes[i].div.clientWidth / cubes[i].div.clientHeight;
+			cubes[i].camera.updateProjectionMatrix();
+			cubes[i].renderer.setSize( cubes[i].div.clientWidth, cubes[i].div.clientHeight );
 		}
 	},
 
 	animate: function () {
-		requestAnimationFrame( globalArray[0].animate );
+		requestAnimationFrame( cubes[0].animate );
 
-		for ( var i=0; i<globalCounter; i++ ) {
-			globalArray[i].mesh.rotation.x += 0.005;
-			globalArray[i].mesh.rotation.y += 0.01;
-			globalArray[i].renderer.render( globalArray[i].scene, globalArray[i].camera );
+		for (var i=0; i<cubes.length; i++){
+			cubes[i].mesh.rotation.x += 0.005;
+			cubes[i].mesh.rotation.y += 0.01;
+			cubes[i].renderer.render( cubes[i].scene, cubes[i].camera );
 		}
 	},
 
-	tween: function () {
+	animation: function () {
 		this.timeLine.to(this.mesh.position, 1, { x: 300, y: 170, z: -180, ease:Strong.easeInOut, onComplete: this.reverseAnimation, onCompleteParams: [this] } );
 	},
 
