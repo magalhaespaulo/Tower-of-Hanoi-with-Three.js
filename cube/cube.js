@@ -1,10 +1,9 @@
-function Cube (name) {
-
+function Cube (divId) {
 	if (typeof cubes === 'undefined') cubes = [];
+	if (typeof divId === 'undefined') return false;
+	if (document.getElementById(divId) === null) return false;
 
-	this.id = cubes.length;
-	this.name = name;
-	this.div = document.getElementById(name);
+	this.div = document.getElementById(divId);
 	cubes.push(this);
 	this.init();
 }
@@ -42,7 +41,7 @@ Cube.prototype = {
 	},
 
 	createObject: function () {
-		var geometry = new THREE.CubeGeometry( 200, 200, 200 );
+		var geometry = new THREE.CubeGeometry( 100, 100, 100 );
 		var texture = THREE.ImageUtils.loadTexture( 'images/crate.gif' );
 		texture.anisotropy = this.renderer.getMaxAnisotropy();
 		var material = new THREE.MeshBasicMaterial( { map: texture } );
